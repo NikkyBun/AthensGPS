@@ -11,7 +11,8 @@
       },
       "env": {
         "EXPO_PUBLIC_CONVEX_URL": "https://incredible-dachshund-156.convex.cloud"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
@@ -20,7 +21,8 @@
       },
       "env": {
         "EXPO_PUBLIC_CONVEX_URL": "https://incredible-dachshund-156.convex.cloud"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
