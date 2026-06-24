@@ -67,7 +67,7 @@ eas.json             EAS build (preview=APK, prod URL baked in) + update channel
 
 ## Cloud coordinates
 
-(Also in agent memory; `.env.local` is gitignored so not in the repo.)
+(`.env.local` is gitignored so not in the repo.)
 - **Convex prod**: `incredible-dachshund-156` → https://incredible-dachshund-156.convex.cloud (APK points here, seeded)
 - **Convex dev**: `uncommon-ermine-9` (`npx convex dev`)
 - **Expo/EAS**: account `nikkyfolfy`, projectId `07ab6e7e-3106-4d61-99df-b09c1e15020c`
