@@ -7,6 +7,18 @@ app backed by **Convex**. The phone never touches the (HTTP-flaky, key-less)
 OASA telematics API directly — Convex fetches it server-side over HTTPS, caches
 it in reactive tables, and live bus positions stream to the map automatically.
 
+## Download
+
+- **Android app (APK)** — download the latest build from the
+  **[Releases page](https://github.com/NikkyBun/AthensGPS/releases/latest)**, then
+  open the `.apk` on your phone to install. Android may ask you to allow
+  "Install unknown apps" for your browser or file manager
+  (Settings → Apps → Special access → Install unknown apps).
+- **Source code** — `git clone https://github.com/NikkyBun/AthensGPS.git`, or grab
+  the [ZIP](https://github.com/NikkyBun/AthensGPS/archive/refs/heads/main.zip).
+
+> No iOS build is published — run it on iPhone via **Expo Go** (see [Run it](#run-it)).
+
 ## Stack
 
 - **Expo SDK 56** (React Native 0.85, React 19) — runs in **Expo Go**, no native build
