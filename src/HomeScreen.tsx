@@ -16,6 +16,9 @@ import { useAction, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { OasaArrival } from "../convex/oasaApi";
 import TransitMap from "./TransitMap";
+import SideMenu from "./SideMenu";
+import Star from "./Star";
+import { useFavorites, type FavoriteLine } from "./favorites";
 
 const TOP_INSET =
   Platform.OS === "ios" ? 50 : RNStatusBar.currentHeight ?? 24;
@@ -29,11 +32,23 @@ const BUS_REFRESH_MS = 12_000;
 type SelectedLine = { lineCode: string; lineId: string; descr: string };
 type SelectedStop = { stopCode: string; descr: string };
 
-export default function HomeScreen() {
+type HomeScreenProps = {
+  /** When the map is opened from a favorite, the line to preselect. */
+  initialLine?: FavoriteLine | null;
+  onOpenFavorites: () => void;
+  onGoMap: () => void;
+};
+
+export default function HomeScreen({ initialLine, onOpenFavorites, onGoMap }: HomeScreenProps) {
   const [search, setSearch] = useState("");
-  const [selectedLine, setSelectedLine] = useState<SelectedLine | null>(null);
+  // Preselect the favorite's line on mount (the parent remounts this screen per
+  // navigation, so reading initialLine once here is enough).
+  const [selectedLine, setSelectedLine] = useState<SelectedLine | null>(initialLine ?? null);
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const [selectedStop, setSelectedStop] = useState<SelectedStop | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   /* --- reactive data (subscriptions; "skip" until we have a key) --- */
   const linesQ = useQuery(api.transit.listLines);
@@ -156,8 +171,12 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Top overlay: search panel, or the active-line header + direction chips. */}
+      {/* Top overlay: menu button, then the search panel or active-line header. */}
       <View style={[styles.topOverlay, { paddingTop: TOP_INSET + 8 }]} pointerEvents="box-none">
+        <Pressable style={styles.menuBtn} onPress={() => setMenuOpen(true)} hitSlop={6}>
+          <Text style={styles.menuIcon}>←</Text>
+        </Pressable>
+
         {!selectedLine ? (
           <SearchPanel
             search={search}
@@ -166,6 +185,8 @@ export default function HomeScreen() {
             loading={linesQ === undefined}
             onPick={pickLine}
             onRetry={() => loadLines().catch(() => {})}
+            isFavorite={isFavorite}
+            toggleFavorite={toggleFavorite}
           />
         ) : (
           <View style={styles.card}>
@@ -176,6 +197,10 @@ export default function HomeScreen() {
               <Text style={styles.lineDescr} numberOfLines={1}>
                 {selectedLine.descr}
               </Text>
+              <Star
+                filled={isFavorite(selectedLine.lineCode)}
+                onPress={() => toggleFavorite(selectedLine)}
+              />
               <Pressable hitSlop={8} onPress={changeLine}>
                 <Text style={styles.changeLink}>Change</Text>
               </Pressable>
@@ -217,6 +242,19 @@ export default function HomeScreen() {
           onClose={() => setSelectedStop(null)}
         />
       )}
+
+      <SideMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onMap={() => {
+          setMenuOpen(false);
+          onGoMap();
+        }}
+        onFavorites={() => {
+          setMenuOpen(false);
+          onOpenFavorites();
+        }}
+      />
     </View>
   );
 }
@@ -230,9 +268,20 @@ type SearchPanelProps = {
   loading: boolean;
   onPick: (l: SelectedLine) => void;
   onRetry: () => void;
+  isFavorite: (lineCode: string) => boolean;
+  toggleFavorite: (line: FavoriteLine) => void;
 };
 
-function SearchPanel({ search, onSearch, lines, loading, onPick, onRetry }: SearchPanelProps) {
+function SearchPanel({
+  search,
+  onSearch,
+  lines,
+  loading,
+  onPick,
+  onRetry,
+  isFavorite,
+  toggleFavorite,
+}: SearchPanelProps) {
   return (
     <View style={[styles.card, styles.searchCard]}>
       <Text style={styles.title}>AthensGPS</Text>
@@ -276,6 +325,17 @@ function SearchPanel({ search, onSearch, lines, loading, onPick, onRetry }: Sear
               <Text style={styles.rowDescr} numberOfLines={1}>
                 {item.descr || item.descrEng}
               </Text>
+              <Star
+                filled={isFavorite(item.lineCode)}
+                size={20}
+                onPress={() =>
+                  toggleFavorite({
+                    lineCode: item.lineCode,
+                    lineId: item.lineId,
+                    descr: item.descr || item.descrEng,
+                  })
+                }
+              />
             </Pressable>
           )}
         />
@@ -357,6 +417,22 @@ const styles = StyleSheet.create({
   mapWrap: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
 
   topOverlay: { position: "absolute", top: 0, left: 0, right: 0, paddingHorizontal: 10 },
+
+  menuBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  menuIcon: { fontSize: 22, color: ACCENT, fontWeight: "800", marginTop: -2 },
 
   card: {
     backgroundColor: "#fff",

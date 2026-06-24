@@ -1,8 +1,14 @@
+import { useCallback, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { ConvexProvider } from "convex/react";
 import { convex } from "./src/convex";
 import HomeScreen from "./src/HomeScreen";
+import LandingScreen from "./src/LandingScreen";
+import FavoritesScreen from "./src/FavoritesScreen";
+import { FavoritesProvider, type FavoriteLine } from "./src/favorites";
+
+type Screen = "landing" | "map" | "favorites";
 
 export default function App() {
   // No EXPO_PUBLIC_CONVEX_URL configured → guide the user instead of crashing.
@@ -10,8 +16,44 @@ export default function App() {
 
   return (
     <ConvexProvider client={convex}>
-      <HomeScreen />
+      <FavoritesProvider>
+        <Root />
+      </FavoritesProvider>
     </ConvexProvider>
+  );
+}
+
+function Root() {
+  const [screen, setScreen] = useState<Screen>("landing");
+  // Set when the map is opened from a favorite, so HomeScreen preselects that line.
+  const [pendingLine, setPendingLine] = useState<FavoriteLine | null>(null);
+
+  // Open the map fresh (no preselected line) — from the landing/drawer "Map".
+  const goMap = useCallback(() => {
+    setPendingLine(null);
+    setScreen("map");
+  }, []);
+
+  // Open the map with a line already selected — "searching" a favorite.
+  const openLineOnMap = useCallback((line: FavoriteLine) => {
+    setPendingLine(line);
+    setScreen("map");
+  }, []);
+
+  if (screen === "landing") {
+    return <LandingScreen onMap={goMap} onFavorites={() => setScreen("favorites")} />;
+  }
+
+  if (screen === "favorites") {
+    return <FavoritesScreen onBack={() => setScreen("landing")} onPick={openLineOnMap} />;
+  }
+
+  return (
+    <HomeScreen
+      initialLine={pendingLine}
+      onOpenFavorites={() => setScreen("favorites")}
+      onGoMap={goMap}
+    />
   );
 }
 
